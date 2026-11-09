@@ -1,4 +1,3 @@
-
 package ma.tp.bank.aggregates;
 
 import ma.tp.bank.commands.AddAccountCommand;
