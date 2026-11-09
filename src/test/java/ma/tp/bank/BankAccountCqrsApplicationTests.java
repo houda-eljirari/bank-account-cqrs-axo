@@ -1,0 +1,13 @@
+package ma.tp.bank;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class BankAccountCqrsApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
+
+}
