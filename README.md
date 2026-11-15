@@ -2,7 +2,7 @@
 
 ## 1. Présentation du projet
 
-Ce projet consiste à développer une application de gestion de comptes bancaires en utilisant les architectures **CQRS (Command Query Responsibility Segregation)** et **Event Sourcing** avec Spring Boot et Axon Framework.
+Ce projet consiste à développer une application de gestion de comptes bancaires en utilisant les architectures **CQRS (Command Query Responsibility Segregation)** et **Event Sourcing**, avec Spring Boot et Axon Framework.
 
 L'objectif est de séparer les opérations de modification des données (Commandes) des opérations de consultation (Requêtes), tout en conservant l'historique des événements métier.
 
@@ -269,9 +269,11 @@ Pour enregistrer le serveur PostgreSQL dans pgAdmin :
 - Username : `bankuser`
 - Password : `bankpass`
 
+> Ces identifiants sont destinés à l'environnement local de développement. Ils doivent être remplacés par des identifiants sécurisés dans un environnement de production.
+
 ## 9. Scénario fonctionnel vérifié
 
-Un scénario complet a été exécuté avec Swagger :
+Un scénario fonctionnel a été exécuté avec Swagger :
 
 | Étape | Opération | Résultat |
 |---|---|---|
@@ -298,26 +300,7 @@ Les événements suivants ont été retrouvés dans `domain_event_entry` :
 
 Le scénario a donc produit quatre événements persistés pour le compte testé.
 
-## 10. État actuel du développement
-
-| Fonctionnalité | État |
-|---|--|
-| Configuration Spring Boot | Terminée |
-| Configuration PostgreSQL | Terminée |
-| Commandes Axon | Implémentées |
-| Account Aggregate | Implémenté |
-| Événements métier | Implémentés |
-| Event Store JPA | Vérifié |
-| Event Handlers | Implémentés |
-| Projections PostgreSQL | Fonctionnelles |
-| Query Handlers | Implémentés |
-| API REST Command | Fonctionnelle |
-| API REST Query | Fonctionnelle |
-| Documentation Swagger | Fonctionnelle |
-| Tests manuels des endpoints | Réalisés |
-| Tests automatisés | Réalisés |
-| Gestion centralisée des exceptions | À améliorer |
-## Captures d'écran
+## 10. Captures d'écran
 
 Les captures suivantes illustrent le fonctionnement de l'application, son API REST et son environnement technique.
 
@@ -349,10 +332,30 @@ Les captures suivantes illustrent le fonctionnement de l'application, son API RE
 
 ![Conteneurs Docker](screenshots/08-docker-containers.png)
 
-## 11. Conclusion
+## 11. État actuel du développement
+
+| Fonctionnalité | État           |
+|---|----------------|
+| Configuration Spring Boot | Terminée       |
+| Configuration PostgreSQL | Terminée       |
+| Commandes Axon | Implémentées   |
+| Account Aggregate | Implémenté     |
+| Événements métier | Implémentés    |
+| Event Store JPA | Vérifié        |
+| Event Handlers | Implémentés    |
+| Projections PostgreSQL | Fonctionnelles |
+| Query Handlers | Implémentés    |
+| API REST Command | Fonctionnelle  |
+| API REST Query | Fonctionnelle  |
+| Documentation Swagger | Fonctionnelle  |
+| Tests manuels des endpoints | Réalisés       |
+| Tests automatisés | Réaliser       |
+| Gestion centralisée des exceptions | À améliorer    |
+
+## 12. Conclusion
 
 Cette première version met en œuvre les principes fondamentaux de CQRS et Event Sourcing avec Spring Boot, Axon Framework et PostgreSQL.
 
-La séparation entre les commandes et les requêtes, la persistance des événements métier et la mise à jour des projections constituent la base fonctionnelle de l'application.
+La séparation entre les commandes et les requêtes, la persistance des événements métier dans l'Event Store et la mise à jour des projections constituent la base fonctionnelle de l'application.
 
-Des améliorations restent possibles, notamment les tests automatisés, la gestion centralisée des exceptions et l'ajout de fonctionnalités complémentaires.
+Des améliorations restent possibles, notamment l'ajout de tests automatisés et l'amélioration de la gestion centralisée des exceptions.
