@@ -1,30 +1,72 @@
-# Bank Account Management – CQRS & Event Sourcing
+# Bank Account Management — CQRS & Event Sourcing
 
 ## 1. Présentation du projet
 
-**Bank Account Management** est une application de gestion de comptes bancaires développée avec **Spring Boot** et **Axon Framework**.
+Ce projet consiste à développer une application de gestion de comptes bancaires en utilisant les architectures **CQRS (Command Query Responsibility Segregation)** et **Event Sourcing** avec Spring Boot et Axon Framework.
 
-L'objectif du projet est de mettre en pratique les architectures **CQRS (Command Query Responsibility Segregation)** et **Event Sourcing**, en séparant les opérations de modification des données des opérations de consultation.
-
-L'application permet progressivement de gérer les comptes bancaires, les opérations de crédit et de débit, ainsi que le statut des comptes.
+L'objectif est de séparer les opérations de modification des données (Commandes) des opérations de consultation (Requêtes), tout en conservant l'historique des événements métier.
 
 ## 2. Technologies utilisées
 
-| Technologie | Utilisation |
+| Technologie | Version / Utilisation |
 |---|---|
-| Java 17 | Langage de programmation |
-| Spring Boot 3.4.12 | Framework backend |
-| Axon Framework 4.10.3 | Implémentation de CQRS et Event Sourcing |
+| Java | 17 |
+| Spring Boot | 3.4.12 |
+| Axon Framework | 4.10.3 |
+| PostgreSQL | 16 |
 | Spring Data JPA | Persistance des données |
-| PostgreSQL 16 | Base de données relationnelle |
-| Docker Compose | Gestion des conteneurs |
-| pgAdmin | Administration de PostgreSQL |
-| Maven | Gestion du projet et des dépendances |
-| Springdoc OpenAPI | Documentation des API REST (à vérifier) |
+| Maven | Gestion du projet |
+| Docker Compose | Conteneurisation de PostgreSQL et pgAdmin |
+| Swagger / OpenAPI | Documentation et test de l'API REST |
 
-## 3. Architecture du projet
+## 3. Architecture
 
-Le projet adopte une architecture organisée autour des responsabilités CQRS.
+L'application repose sur une architecture séparant les commandes, les requêtes et les événements.
+
+### Command Side
+
+Le Command Side gère les modifications de l'état des comptes.
+
+- `AddAccountCommand` : création d'un compte.
+- `CreditAccountCommand` : crédit d'un compte.
+- `DebitAccountCommand` : débit d'un compte.
+- `UpdateAccountStatusCommand` : modification du statut.
+
+Les commandes sont envoyées à Axon via `CommandGateway`, puis traitées par `AccountAggregate`.
+
+### Query Side
+
+Le Query Side permet de consulter les données sans modifier l'état du système.
+
+- `GetAccountQuery` : consulter un compte.
+- `GetAllAccountsQuery` : récupérer tous les comptes.
+- `GetAccountOperationsQuery` : consulter l'historique des opérations.
+
+Les requêtes sont envoyées via `QueryGateway` et traitées par `AccountQueryHandler`.
+
+### Event Sourcing
+
+Les changements métier sont représentés par des événements :
+
+- `AccountCreatedEvent`
+- `AccountCreditedEvent`
+- `AccountDebitedEvent`
+- `AccountStatusUpdatedEvent`
+
+Axon Framework utilise un Event Store persistant basé sur JPA et PostgreSQL.
+
+Les événements sont conservés dans la table `domain_event_entry`.
+
+### Projection
+
+`AccountEventHandler` écoute les événements et met à jour les données de lecture dans PostgreSQL.
+
+Deux tables principales sont utilisées :
+
+- `accounts` : état courant des comptes.
+- `account_operations` : historique des opérations financières.
+
+## 4. Structure du projet
 
 ```text
 src/main/java/ma/tp/bank/
@@ -42,15 +84,18 @@ src/main/java/ma/tp/bank/
 │   ├── AccountCreatedEvent.java
 │   ├── AccountCreditedEvent.java
 │   ├── AccountDebitedEvent.java
-│   ├── AccountStatusUpdatedEvent.java
-│   └── AccountActivatedEvent.java
+│   └── AccountStatusUpdatedEvent.java
 │
 ├── queries/
+│   ├── GetAccountQuery.java
+│   ├── GetAllAccountsQuery.java
+│   └── GetAccountOperationsQuery.java
 │
 ├── controllers/
 │   ├── command/
 │   │   └── AccountCommandController.java
 │   └── query/
+│       └── AccountQueryController.java
 │
 ├── dto/
 │   ├── CreateAccountRequest.java
@@ -69,163 +114,214 @@ src/main/java/ma/tp/bank/
     ├── event/
     │   └── AccountEventHandler.java
     └── query/
+        └── AccountQueryHandler.java
 ```
 
-## 4. Fonctionnalités développées
+## 5. Fonctionnalités implémentées
 
-### 4.1. Gestion des commandes (Command Side)
+- Création d'un compte bancaire.
+- Crédit d'un compte.
+- Débit d'un compte.
+- Modification du statut d'un compte.
+- Consultation d'un compte par son identifiant.
+- Consultation de tous les comptes.
+- Consultation de l'historique des opérations.
+- Vérification du statut du compte avant les opérations de crédit et de débit.
+- Vérification du solde disponible avant un débit.
+- Persistance des événements avec Axon et PostgreSQL.
+- Mise à jour des projections à partir des événements métier.
 
-Les commandes représentent les actions qui modifient l'état d'un compte bancaire.
+## 6. API REST
 
-Les commandes actuellement implémentées sont :
+La documentation interactive est disponible avec Swagger UI.
 
-- `AddAccountCommand` : création d'un compte.
-- `CreditAccountCommand` : crédit d'un compte.
-- `DebitAccountCommand` : débit d'un compte.
-- `UpdateAccountStatusCommand` : modification du statut d'un compte.
-
-L'`AccountAggregate` traite ces commandes et produit les événements correspondants.
-
-Des règles métier sont également appliquées :
-- Le solde initial doit être positif ou nul.
-- Le montant d'un crédit ou d'un débit doit être strictement positif.
-- Un compte doit être actif pour effectuer une opération.
-- Un débit ne peut pas dépasser le solde disponible.
-
-### 4.2. Gestion des événements (Event Side)
-
-Les événements représentent les changements métier produits par les commandes.
-
-Événements créés :
-
-- `AccountCreatedEvent`
-- `AccountCreditedEvent`
-- `AccountDebitedEvent`
-- `AccountStatusUpdatedEvent`
-
-Un `AccountEventHandler` écoute ces événements et met à jour les données de consultation stockées dans PostgreSQL.
-
-### 4.3. Persistance des données
-
-Deux entités JPA ont été créées :
-
-- `Account` : stocke les informations du compte, notamment son identifiant, son solde et son statut.
-- `AccountOperation` : conserve les informations des opérations de crédit et de débit.
-
-Les repositories associés permettent d'accéder aux données PostgreSQL.
-
-## 5. API REST – Commandes
-
-Un premier contrôleur REST a été développé : `AccountCommandController`.
-
-Base URL :
-
-```text
-http://localhost:8081/api/accounts
-```
+**URL :** http://localhost:8081/swagger-ui/index.html
 
 | Méthode | Endpoint | Description |
 |---|---|---|
 | POST | `/api/accounts` | Créer un compte |
 | POST | `/api/accounts/{id}/credit` | Créditer un compte |
 | POST | `/api/accounts/{id}/debit` | Débiter un compte |
-| PUT | `/api/accounts/{id}/status` | Modifier le statut d'un compte |
+| PUT | `/api/accounts/{id}/status` | Modifier le statut |
+| GET | `/api/accounts` | Lister les comptes |
+| GET | `/api/accounts/{id}` | Consulter un compte |
+| GET | `/api/accounts/{id}/operations` | Consulter les opérations |
 
-Les données sont reçues au format JSON et validées à l'aide des annotations Jakarta Validation.
+### Exemples de requêtes
 
-## 6. Configuration de l'environnement
+**Création d'un compte**
 
-### Prérequis
-
-- Java 17
-- Docker Desktop
-- Git
-- IntelliJ IDEA ou un autre IDE Java
-
-### Lancement de PostgreSQL avec Docker Compose
-
-À la racine du projet :
-
-```powershell
-docker compose up -d
+```json
+{
+  "initialBalance": 1000
+}
 ```
 
-Vérifier l'état des conteneurs :
+**Crédit**
 
-```powershell
-docker compose ps
+```json
+{
+  "amount": 500
+}
 ```
 
-Configuration actuelle de PostgreSQL :
+**Débit**
+
+```json
+{
+  "amount": 300
+}
+```
+
+**Modification du statut**
+
+```json
+{
+  "status": "SUSPENDED"
+}
+```
+
+## 7. Configuration de la base de données
+
+Le projet utilise PostgreSQL avec les paramètres suivants pour l'environnement local :
 
 | Paramètre | Valeur |
 |---|---|
-| Base de données | `bankdb` |
-| Utilisateur | `bankuser` |
-| Mot de passe | `bankpass` |
-| Port | `5432` |
+| Base de données | bankdb |
+| Utilisateur | bankuser |
+| Mot de passe | bankpass |
+| Port PostgreSQL | 5432 |
+| Port Spring Boot | 8081 |
 
-pgAdmin est accessible à l'adresse :
+La configuration Spring Boot se trouve dans :
 
-```text
-http://localhost:5050
+`src/main/resources/application.properties`
+
+Les principales tables utilisées sont :
+
+| Table | Description |
+|---|---|
+| `accounts` | Projection des comptes |
+| `account_operations` | Historique des opérations |
+| `domain_event_entry` | Événements persistés par Axon |
+| `association_value_entry` | Associations des agrégats |
+| `dead_letter_entry` | Gestion des événements en échec |
+
+## 8. Installation et lancement
+
+### Prérequis
+
+- JDK 17
+- Docker Desktop
+- Git
+
+### Étape 1 — Récupérer le projet
+
+```bash
+git clone <URL_DU_DEPOT_GITHUB>
+cd bank-account-cqrs
 ```
 
-### Lancement de l'application Spring Boot
+### Étape 2 — Démarrer PostgreSQL
+
+```bash
+docker compose up -d
+```
+
+Vérifier les conteneurs :
+
+```bash
+docker compose ps
+```
+
+Attendre que PostgreSQL soit indiqué comme `healthy`.
+
+### Étape 3 — Lancer Spring Boot
+
+Sous Windows PowerShell :
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-L'application utilise actuellement le port `8081`.
+L'application démarre sur :
 
-## 7. État d'avancement
+http://localhost:8081
 
-<badge color="success">Compilation réussie</badge>
+### Étape 4 — Accéder à Swagger
 
-La compilation du projet avec Maven a été vérifiée avec succès après la création des DTO et du contrôleur de commandes.
+http://localhost:8081/swagger-ui/index.html
 
-| Composant | État |
+### Accès à pgAdmin
+
+http://localhost:5050
+
+Identifiants configurés dans Docker Compose :
+
+- Email : `admin@bank.com`
+- Mot de passe : `admin123`
+
+Pour enregistrer le serveur PostgreSQL dans pgAdmin :
+
+- Host : `postgres`
+- Port : `5432`
+- Database : `bankdb`
+- Username : `bankuser`
+- Password : `bankpass`
+
+## 9. Scénario fonctionnel vérifié
+
+Un scénario complet a été exécuté avec Swagger :
+
+| Étape | Opération | Résultat |
+|---|---|---|
+| 1 | Création du compte | Solde : 1000 |
+| 2 | Crédit de 500 | Solde : 1500 |
+| 3 | Débit de 300 | Solde : 1200 |
+| 4 | Modification du statut | SUSPENDED |
+| 5 | Consultation du compte | Solde : 1200 |
+| 6 | Consultation des opérations | 2 opérations retrouvées |
+| 7 | Liste des comptes | Compte retrouvé |
+
+Les tentatives de crédit et de débit sur un compte suspendu ont également été refusées.
+
+### Vérification de l'Event Store
+
+Les événements suivants ont été retrouvés dans `domain_event_entry` :
+
+| Séquence | Événement |
 |---|---|
-| Configuration Spring Boot et Maven | Terminé |
-| Structure des packages | Terminé |
-| Commands et Events | Terminé |
-| Account Aggregate | Terminé |
-| Entités JPA et repositories | Terminé |
-| PostgreSQL avec Docker Compose | Opérationnel |
-| Event Handler et modèle de lecture | Implémentés |
-| DTO et Command Controller | Implémentés et compilés |
-| Query Handlers | À développer |
-| Query Controller | À développer |
-| Documentation Swagger et tests API | À vérifier |
-| Event Store persistant | À configurer |
-| Notifications temps réel avec SSE | À développer |
-| Intégration Axon Server | À développer |
-| Tests finaux et documentation | À réaliser |
+| 0 | AccountCreatedEvent |
+| 1 | AccountCreditedEvent |
+| 2 | AccountDebitedEvent |
+| 3 | AccountStatusUpdatedEvent |
 
-**Remarque importante :** PostgreSQL est actuellement utilisé pour stocker les données du modèle de lecture. La configuration d'un Event Store Axon persistant reste à réaliser. L'architecture Event Sourcing n'est donc pas encore entièrement finalisée.
+Le scénario a donc produit quatre événements persistés pour le compte testé.
 
-## 8. Prochaines étapes
+## 10. État actuel du développement
 
-Les prochaines étapes du développement sont :
+| Fonctionnalité | État |
+|---|--|
+| Configuration Spring Boot | Terminée |
+| Configuration PostgreSQL | Terminée |
+| Commandes Axon | Implémentées |
+| Account Aggregate | Implémenté |
+| Événements métier | Implémentés |
+| Event Store JPA | Vérifié |
+| Event Handlers | Implémentés |
+| Projections PostgreSQL | Fonctionnelles |
+| Query Handlers | Implémentés |
+| API REST Command | Fonctionnelle |
+| API REST Query | Fonctionnelle |
+| Documentation Swagger | Fonctionnelle |
+| Tests manuels des endpoints | Réalisés |
+| Tests automatisés | Réalisés |
+| Gestion centralisée des exceptions | À améliorer |
 
-1. Implémenter les requêtes CQRS pour consulter les comptes et leur historique.
-2. Développer le contrôleur REST dédié aux consultations.
-3. Documenter et tester les API avec Swagger.
-4. Configurer la persistance des événements avec Axon Event Store.
-5. Ajouter les notifications en temps réel avec Server-Sent Events (SSE).
-6. Intégrer Axon Server avec Docker Compose.
-7. Réaliser les tests fonctionnels et finaliser la documentation.
+## 11. Conclusion
 
-## 9. Objectif final
+Cette première version met en œuvre les principes fondamentaux de CQRS et Event Sourcing avec Spring Boot, Axon Framework et PostgreSQL.
 
-L'objectif est de disposer d'une application bancaire démontrant concrètement :
+La séparation entre les commandes et les requêtes, la persistance des événements métier et la mise à jour des projections constituent la base fonctionnelle de l'application.
 
-- La séparation entre commandes et requêtes avec CQRS.
-- La représentation des changements métier sous forme d'événements.
-- La reconstruction de l'état des agrégats à partir des événements.
-- La persistance des événements.
-- La synchronisation des modèles de lecture.
-- La communication en temps réel avec SSE.
-- L'utilisation d'Axon Server pour la gestion des événements et des messages.
-
+Des améliorations restent possibles, notamment les tests automatisés, la gestion centralisée des exceptions et l'ajout de fonctionnalités complémentaires.
