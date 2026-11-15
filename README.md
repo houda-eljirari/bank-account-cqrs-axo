@@ -306,19 +306,19 @@ Les captures suivantes illustrent le fonctionnement de l'application, son API RE
 
 ### 1. Documentation de l'API avec Swagger
 
-![Swagger UI](screenshots/01-swagger-overview.png)
+![Swagger UI](screenshots/01-Documentation Swagger.png)
 
 ### 2. Création d'un compte bancaire
 
-![Création d'un compte](screenshots/02-create-account.png)
+![Création d'un compte](screenshots/02-Création d'un compte.png)
 
 ### 3. Consultation des informations du compte
 
-![Détails du compte](screenshots/04-account-details.png)
+![Détails du compte](screenshots/04-Consultation du compte.png)
 
 ### 4. Historique des opérations
 
-![Historique des opérations](screenshots/05-account-operations.png)
+![Historique des opérations](screenshots/05-Historique des opérations.png)
 
 ### 5. Tables de la base de données PostgreSQL
 
