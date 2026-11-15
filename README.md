@@ -317,6 +317,37 @@ Le scénario a donc produit quatre événements persistés pour le compte testé
 | Tests manuels des endpoints | Réalisés |
 | Tests automatisés | Réalisés |
 | Gestion centralisée des exceptions | À améliorer |
+## Captures d'écran
+
+Les captures suivantes illustrent le fonctionnement de l'application, son API REST et son environnement technique.
+
+### 1. Documentation de l'API avec Swagger
+
+![Swagger UI](screenshots/01-swagger-overview.png)
+
+### 2. Création d'un compte bancaire
+
+![Création d'un compte](screenshots/02-create-account.png)
+
+### 3. Consultation des informations du compte
+
+![Détails du compte](screenshots/04-account-details.png)
+
+### 4. Historique des opérations
+
+![Historique des opérations](screenshots/05-account-operations.png)
+
+### 5. Tables de la base de données PostgreSQL
+
+![Tables PostgreSQL](screenshots/06-postgresql-tables.png)
+
+### 6. Événements persistés dans l'Event Store
+
+![Event Store](screenshots/07-event-store.png)
+
+### 7. Conteneurs Docker
+
+![Conteneurs Docker](screenshots/08-docker-containers.png)
 
 ## 11. Conclusion
 
